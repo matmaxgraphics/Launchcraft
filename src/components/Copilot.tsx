@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AskBox } from "./AskBox";
 import { QA_LIST, type Ctx, type Insight } from "@/copilot/insights";
 
 interface Props {
@@ -11,9 +12,13 @@ interface Props {
   setShowingId: (id: string | null) => void;
   /** Which Q&A chips are relevant to this step. */
   qaIds: string[];
+  /** Builds the grounded context for AI questions; omit to hide the ask box. */
+  getAskContext?: () => unknown;
 }
 
-export function Copilot({ insights, ctx, onShow, showingId, setShowingId, qaIds }: Props) {
+const ASK_SUGGESTIONS = ["Explain my launch in plain language", "What could surprise a buyer here?", "What does the curve shape mean for early buyers?"];
+
+export function Copilot({ insights, ctx, onShow, showingId, setShowingId, qaIds, getAskContext }: Props) {
   const [open, setOpen] = useState<string | null>(null);
   const qa = QA_LIST.filter((q) => qaIds.includes(q.id));
   const active = QA_LIST.find((q) => q.id === open);
@@ -75,6 +80,8 @@ export function Copilot({ insights, ctx, onShow, showingId, setShowingId, qaIds 
           {active && <div className="qa-answer fade-up" dangerouslySetInnerHTML={{ __html: active.a(ctx) }} />}
         </div>
       )}
+
+      {getAskContext && <AskBox getContext={getAskContext} suggestions={ASK_SUGGESTIONS} />}
 
       <div className="copilot-foot">Readouts describe your configuration. They aren&apos;t financial advice or predictions.</div>
     </aside>

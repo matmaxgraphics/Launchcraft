@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppHeader } from "../AppHeader";
+import { AskBox } from "../AskBox";
+import { liveContext } from "@/copilot/context";
 import { CurveChart } from "../CurveChart";
+import { EarningsPanel } from "./EarningsPanel";
 import { MigrationPanel } from "./MigrationPanel";
 import { TradePanel } from "./TradePanel";
 import { fetchDammInfo, type DammInfo } from "@/lens/migrate";
 import { explorerAddress, explorerTx, getConnection, shortAddr } from "@/deploy/rpc";
 import { lensReads, relTime, statusOf } from "@/lens/insights";
-import { fetchActivity, fetchLaunchLive, fetchLaunchStatic, fetchTokenBalance, parseAddress, type ActivityRow, type LaunchLive, type LaunchStatic } from "@/lens/read";
+import { fetchActivity, fetchLaunchLive, fetchLaunchStatic, fetchTokenBalance, fetchTokenImage, parseAddress, type ActivityRow, type LaunchLive, type LaunchStatic } from "@/lens/read";
 import { fmtNum, fmtPct, fmtPrice, fmtSol, fmtTokens, fmtUsd } from "@/lib/fmt";
 import { useWallet } from "@/wallet/WalletContext";
 import { PublicKey } from "@solana/web3.js";
@@ -22,6 +25,7 @@ export function LaunchLens({ poolAddress }: { poolAddress: string }) {
   const [st, setSt] = useState<LaunchStatic | null>(null);
   const [live, setLive] = useState<LaunchLive | null>(null);
   const [damm, setDamm] = useState<DammInfo | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [holdings, setHoldings] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +71,17 @@ export function LaunchLens({ poolAddress }: { poolAddress: string }) {
       cancelled = true;
     };
   }, [poolAddress, attempt]);
+
+  // The logo comes from the metadata JSON; it never blocks the dashboard, and failing just means no image.
+  useEffect(() => {
+    setLogoUrl(null);
+    if (!st) return;
+    let cancelled = false;
+    fetchTokenImage(st.metadataUri).then((u) => !cancelled && setLogoUrl(u));
+    return () => {
+      cancelled = true;
+    };
+  }, [st]);
 
   // The public devnet RPC can stall; after a while offer a retry instead of an endless spinner.
   useEffect(() => {
@@ -174,6 +189,10 @@ export function LaunchLens({ poolAddress }: { poolAddress: string }) {
         <main className="col-main">
           <div className="eyebrow">LaunchLens</div>
           <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", margin: "6px 0 4px" }}>
+            {logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img className="token-logo" src={logoUrl} alt={`${title} logo`} referrerPolicy="no-referrer" />
+            )}
             <h1 className="page-title" style={{ margin: 0 }}>
               {title} {st.symbol && <span className="faint mono" style={{ fontSize: "0.6em" }}>${st.symbol}</span>}
             </h1>
@@ -286,6 +305,10 @@ export function LaunchLens({ poolAddress }: { poolAddress: string }) {
           <div style={{ marginTop: 16 }}>
             <TradePanel st={st} live={live} holdings={holdings} onTraded={refresh} />
           </div>
+
+          <div style={{ marginTop: 16 }}>
+            <EarningsPanel st={st} live={live} onChanged={refresh} />
+          </div>
         </main>
 
         <div className="col-side">
@@ -303,6 +326,10 @@ export function LaunchLens({ poolAddress }: { poolAddress: string }) {
                 {r.why && <div className="why">{r.why}</div>}
               </div>
             ))}
+            <AskBox
+              getContext={() => liveContext(st, live, damm, reads.map((r) => r.text))}
+              suggestions={["Summarize where this launch stands", "How far is it from graduating?", "Who earns what from the fees?"]}
+            />
             <div className="copilot-foot">Readouts describe on-chain state. They aren&apos;t financial advice or predictions.</div>
           </aside>
 

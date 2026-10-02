@@ -9,10 +9,12 @@ import { explorerAddress, explorerTx, MIN_DEPLOY_SOL, shortAddr } from "@/deploy
 import type { LaunchConfig } from "@/launch/config";
 import type { BuildResult } from "@/launch/toDbc";
 import { fmtSol } from "@/lib/fmt";
+import { uploadLaunchMetadata } from "@/upload/client";
 import { useWallet } from "@/wallet/WalletContext";
 
 const STAGES: { id: DeployStage; label: string; sub: string }[] = [
   { id: "check", label: "Safety check", sub: "Confirms the network is devnet and the wallet can pay" },
+  { id: "upload", label: "Upload logo", sub: "Stores your image and metadata permanently, before anything is spent" },
   { id: "config", label: "Create config", sub: "Signature 1 · writes your curve, fees and migration rules" },
   { id: "pool", label: "Create pool", sub: "Signature 2 · mints the token and opens trading" },
   { id: "verify", label: "Verify on-chain", sub: "Reads the live config back and compares it to your design" },
@@ -23,9 +25,13 @@ type Phase = "idle" | "running" | "done" | "error";
 interface Props {
   config: LaunchConfig;
   build: BuildResult;
+  /** The logo picked in the Token step, if any. Uploaded as the first stage of the launch. */
+  logo: File | null;
 }
 
-export function DeployPanel({ config, build }: Props) {
+export function DeployPanel({ config, build, logo }: Props) {
+  // An upload happens only when there's a logo and the user hasn't supplied their own metadata URI.
+  const willUpload = !!logo && config.token.metadataUri.trim() === "";
   const { wallet, balance, airdrop, refreshBalance } = useWallet();
   const [modal, setModal] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -58,7 +64,24 @@ export function DeployPanel({ config, build }: Props) {
     // a retry after a pool failure skips the config step that already landed
     if (!partial) setDone(new Set());
     try {
-      const r = await deployLaunch({ config, build, wallet, resume: partial, onProgress });
+      const r = await deployLaunch({
+        config,
+        build,
+        wallet,
+        resume: partial,
+        onProgress,
+        resolveUri: willUpload
+          ? async () =>
+              (
+                await uploadLaunchMetadata({
+                  file: logo!,
+                  name: config.token.name.trim(),
+                  symbol: config.token.symbol.trim(),
+                  description: config.token.description,
+                })
+              ).metadataUri
+          : undefined,
+      });
       setRecord(r);
       setPartial(undefined);
       setPhase("done");
@@ -180,7 +203,7 @@ export function DeployPanel({ config, build }: Props) {
       </div>
 
       <div className="deploy-steps">
-        {STAGES.map((s, i) => {
+        {STAGES.filter((s) => s.id !== "upload" || willUpload).map((s, i) => {
           const state = failed === s.id ? "failed" : done.has(s.id) ? "done" : active === s.id ? "active" : "pending";
           return (
             <div key={s.id} className={`deploy-step ${state}`}>
@@ -238,9 +261,9 @@ export function DeployPanel({ config, build }: Props) {
               .
             </div>
           )}
-          {!config.token.metadataUri.trim() && (
+          {!config.token.metadataUri.trim() && !logo && (
             <p className="faint" style={{ fontSize: 12.5, margin: "10px 0 0" }}>
-              No metadata URI set, so a minimal placeholder (name and symbol only) is stored on-chain. Wallets won&apos;t show a logo.
+              No logo chosen, so a minimal placeholder (name and symbol only) is stored on-chain and wallets won&apos;t show an image. Go back to the Token step to add one.
             </p>
           )}
           <div style={{ display: "flex", gap: 10, marginTop: 16, alignItems: "center", flexWrap: "wrap" }}>

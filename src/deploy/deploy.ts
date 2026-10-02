@@ -12,7 +12,7 @@ import { assertDevnet, getConnection, MIN_DEPLOY_SOL } from "./rpc";
 
 const WSOL = new PublicKey("So11111111111111111111111111111111111111112");
 
-export type DeployStage = "check" | "config" | "pool" | "verify";
+export type DeployStage = "check" | "upload" | "config" | "pool" | "verify";
 
 export interface DeployProgress {
   stage: DeployStage;
@@ -48,6 +48,12 @@ export interface DeployArgs {
   resume?: PartialDeploy;
   connection?: Connection;
   onProgress?: (p: DeployProgress) => void;
+  /**
+   * Produces the token's metadata URI (e.g. by uploading the logo). Runs after the safety check and BEFORE any
+   * transaction, so a failed upload costs nothing. It also runs on a resume (the pool step still needs the URI);
+   * re-uploading identical content costs a fraction of a cent.
+   */
+  resolveUri?: () => Promise<string>;
 }
 
 export function friendlyError(e: unknown): string {
@@ -83,7 +89,7 @@ export async function signSendConfirm(conn: Connection, tx: Transaction, wallet:
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function deployLaunch({ config: c, build, wallet, resume, connection, onProgress }: DeployArgs): Promise<DeployRecord> {
+export async function deployLaunch({ config: c, build, wallet, resume, connection, onProgress, resolveUri }: DeployArgs): Promise<DeployRecord> {
   const conn = connection ?? getConnection();
   const say = (p: DeployProgress) => onProgress?.(p);
   let stage: DeployStage = "check";
@@ -98,6 +104,15 @@ export async function deployLaunch({ config: c, build, wallet, resume, connectio
       throw new Error(`The wallet has ${bal.toFixed(3)} SOL on devnet; a launch needs about ${MIN_DEPLOY_SOL} SOL. Get some from faucet.solana.com.`);
     }
     say({ stage: "check", status: "done" });
+
+    // 1b) logo/metadata upload, before anything is spent
+    let uri = c.token.metadataUri.trim();
+    if (resolveUri) {
+      stage = "upload";
+      say({ stage: "upload", status: "active" });
+      uri = await resolveUri();
+      say({ stage: "upload", status: "done" });
+    }
 
     const client = DynamicBondingCurveClient.create(conn, "confirmed");
 
@@ -133,7 +148,7 @@ export async function deployLaunch({ config: c, build, wallet, resume, connectio
     const poolTx = await client.creator.createPool({
       name: c.token.name.trim(),
       symbol: c.token.symbol.trim(),
-      uri: c.token.metadataUri.trim() || placeholderMetadataUri(c.token.name.trim(), c.token.symbol.trim()),
+      uri: uri || placeholderMetadataUri(c.token.name.trim(), c.token.symbol.trim()),
       payer: wallet.publicKey,
       poolCreator: wallet.publicKey,
       config: configPk,

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Keypair, type Connection } from "@solana/web3.js";
 import { lensReads, modelDrift, relTime, statusOf } from "../src/lens/insights";
-import { fetchTokenName, parseAddress, type LaunchLive, type LaunchStatic } from "../src/lens/read";
+import { fetchTokenImage, fetchTokenName, parseAddress, type LaunchLive, type LaunchStatic } from "../src/lens/read";
 
 const st = { thresholdSol: 100, feeBps: 100, startMarketCapSol: 30, supply: 1_000_000_000 } as LaunchStatic;
 const live = (o: Partial<LaunchLive> = {}): LaunchLive => ({
@@ -96,14 +96,34 @@ function metadataBytes(name: string, symbol: string): Uint8Array {
   return all;
 }
 
-test("fetchTokenName decodes Metaplex name/symbol and strips the NUL padding", async () => {
+test("fetchTokenName decodes Metaplex name/symbol/uri and strips the NUL padding", async () => {
   const conn = { getAccountInfo: async () => ({ data: metadataBytes("Signal", "SIG") }) } as unknown as Connection;
-  assert.deepEqual(await fetchTokenName(conn, Keypair.generate().publicKey), { name: "Signal", symbol: "SIG" });
+  assert.deepEqual(await fetchTokenName(conn, Keypair.generate().publicKey), { name: "Signal", symbol: "SIG", uri: "https://x" });
 });
 
 test("fetchTokenName tolerates a missing or malformed account", async () => {
   const none = { getAccountInfo: async () => null } as unknown as Connection;
-  assert.deepEqual(await fetchTokenName(none, Keypair.generate().publicKey), { name: null, symbol: null });
+  assert.deepEqual(await fetchTokenName(none, Keypair.generate().publicKey), { name: null, symbol: null, uri: null });
   const junk = { getAccountInfo: async () => ({ data: new Uint8Array(10) }) } as unknown as Connection;
-  assert.deepEqual(await fetchTokenName(junk, Keypair.generate().publicKey), { name: null, symbol: null });
+  assert.deepEqual(await fetchTokenName(junk, Keypair.generate().publicKey), { name: null, symbol: null, uri: null });
+});
+
+test("fetchTokenImage only follows https metadata and only returns an https image", async () => {
+  const realFetch = globalThis.fetch;
+  const serve = (body: unknown, ok = true) => (globalThis.fetch = (async () => ({ ok, json: async () => body })) as unknown as typeof fetch);
+  try {
+    assert.equal(await fetchTokenImage(null), null);
+    assert.equal(await fetchTokenImage("http://insecure.example/x.json"), null);
+    assert.equal(await fetchTokenImage("data:application/json,{}"), null);
+    serve({ image: "https://devnet.irys.xyz/abc" });
+    assert.equal(await fetchTokenImage("https://devnet.irys.xyz/meta"), "https://devnet.irys.xyz/abc");
+    serve({ image: "javascript:alert(1)" });
+    assert.equal(await fetchTokenImage("https://devnet.irys.xyz/meta"), null);
+    serve({ image: "http://plain.example/a.png" });
+    assert.equal(await fetchTokenImage("https://devnet.irys.xyz/meta"), null);
+    serve({}, false);
+    assert.equal(await fetchTokenImage("https://devnet.irys.xyz/meta"), null);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });

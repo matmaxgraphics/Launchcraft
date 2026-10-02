@@ -12,10 +12,10 @@ export function AppHeader({ active }: { active?: "create" | "launches" }) {
         <BrandMark /> Launchcraft
       </Link>
       <nav className="stepper" aria-label="Main">
-        <Link href="/create" className={`step-pill ${active === "create" ? "active" : ""}`}>
+        <Link href="/create" className={`step-pill nav-pill ${active === "create" ? "active" : ""}`}>
           <span className="t">Create</span>
         </Link>
-        <Link href="/launches" className={`step-pill ${active === "launches" ? "active" : ""}`}>
+        <Link href="/launches" className={`step-pill nav-pill ${active === "launches" ? "active" : ""}`}>
           <span className="t">My launches</span>
         </Link>
       </nav>

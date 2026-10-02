@@ -10,6 +10,7 @@ import { CurveStep } from "./steps/CurveStep";
 import { EconomicsStep } from "./steps/EconomicsStep";
 import { ReviewStep } from "./steps/ReviewStep";
 import { TokenStep } from "./steps/TokenStep";
+import { designContext } from "@/copilot/context";
 import { insightsFor, type StepId } from "@/copilot/insights";
 import { defaultLaunchConfig, type LaunchConfig } from "@/launch/config";
 import { initialSimState, type SimState } from "@/launch/simulate";
@@ -34,6 +35,7 @@ export function CreateFlow() {
   const [highlight, setHighlight] = useState<[number, number] | null>(null);
   const [showingId, setShowingId] = useState<string | null>(null);
   const [sim, setSim] = useState<SimState>(initialSimState);
+  const [logo, setLogo] = useState<File | null>(null);
 
   // restore draft (per-viewer convenience only; storage can be unavailable)
   useEffect(() => {
@@ -41,7 +43,11 @@ export function CreateFlow() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const saved = JSON.parse(raw);
-        if (saved?.config?.curve?.weights?.length === 16) setConfig(saved.config);
+        // merge over the defaults so drafts saved before a field existed (e.g. token.description) still load
+        if (saved?.config?.curve?.weights?.length === 16) {
+          const d = defaultLaunchConfig();
+          setConfig({ ...d, ...saved.config, token: { ...d.token, ...saved.config.token } });
+        }
         if (typeof saved?.solUsd === "number") setSolUsd(saved.solUsd);
       }
     } catch {}
@@ -82,7 +88,7 @@ export function CreateFlow() {
   };
 
   const insights = useMemo(() => insightsFor(cur.id, { config, build }), [cur.id, config, build]);
-  const base = { config, update, issues, build, solUsd };
+  const base = { config, update, issues, build, solUsd, logo, setLogo };
 
   return (
     <>
@@ -133,9 +139,28 @@ export function CreateFlow() {
           </AttemptedContext.Provider>
 
           <div className="footer-nav">
-            <button className="btn ghost" disabled={step === 0} onClick={() => goTo(step - 1)}>
-              ← Back
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+              <button className="btn ghost" disabled={step === 0} onClick={() => goTo(step - 1)}>
+                ← Back
+              </button>
+              <button
+                className="link-btn"
+                style={{ color: "var(--text-3)" }}
+                onClick={() => {
+                  if (!window.confirm("Start over? This clears your draft, including the chosen logo.")) return;
+                  setConfig(defaultLaunchConfig());
+                  setLogo(null);
+                  setSim(initialSimState());
+                  setFurthest(0);
+                  goTo(0);
+                  try {
+                    localStorage.removeItem(STORAGE_KEY);
+                  } catch {}
+                }}
+              >
+                Start over
+              </button>
+            </div>
             {step < STEPS.length - 1 ? (
               <button className="btn primary" onClick={() => (stepOk(step) ? goTo(step + 1) : setAttempted(true))}>
                 Continue →
@@ -161,6 +186,7 @@ export function CreateFlow() {
             showingId={showingId}
             setShowingId={setShowingId}
             qaIds={cur.qa}
+            getAskContext={() => designContext(config, build, insights.map((i) => i.text), cur.id)}
           />
         </div>
       </div>

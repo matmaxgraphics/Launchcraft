@@ -16,7 +16,9 @@ export interface LaunchConfig {
     symbol: string;
     /** Whole tokens, e.g. 1_000_000_000 */
     supply: number;
-    /** Metadata JSON uri (name/symbol/image). Uploaded by the app before deploy. */
+    /** Short description shown by wallets and explorers (goes into the metadata JSON). */
+    description: string;
+    /** Metadata JSON uri (name/symbol/image). Filled by the app when a logo is uploaded, or pasted by the user. */
     metadataUri: string;
   };
   curve: {
@@ -53,7 +55,7 @@ export const MIN_LOCKED_LIQUIDITY_PCT = 10;
 
 export function defaultLaunchConfig(): LaunchConfig {
   return {
-    token: { name: "", symbol: "", supply: 1_000_000_000, metadataUri: "" },
+    token: { name: "", symbol: "", supply: 1_000_000_000, description: "", metadataUri: "" },
     curve: {
       startMarketCapSol: 30,
       graduationMarketCapSol: 300,

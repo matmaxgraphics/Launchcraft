@@ -80,7 +80,7 @@ export function lensReads(st: LaunchStatic, live: LaunchLive, damm?: DammInfo | 
     out.push({
       id: "fees",
       text: `Traders have paid ${fmtSol(live.fees.totalTradingSol)} in fees. Unclaimed: creator ${fmtSol(live.fees.creatorSol)}, partner ${fmtSol(live.fees.partnerSol)}, protocol ${fmtSol(live.fees.protocolSol)}.`,
-      why: "Creator and partner shares can be claimed by the config owner. Claiming isn't in Launchcraft yet.",
+      why: "The creator and the partner each claim their own share by signing from their wallet (see Earnings & claims). The protocol share isn't claimable by them.",
     });
   }
 

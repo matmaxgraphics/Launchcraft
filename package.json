@@ -1,7 +1,7 @@
 {
   "name": "launchcraft",
   "version": "1.0.0",
-  "description": "",
+  "description": "Design, simulate and launch a token on Meteora's Dynamic Bonding Curve, then trade, graduate, migrate and claim, on Solana.",
   "main": "index.js",
   "scripts": {
     "test": "tsx --test test/*.test.ts",
@@ -9,13 +9,18 @@
     "dev": "next dev -p 3100",
     "build": "next build",
     "start": "next start -p 3100",
-    "spike:quotes": "tsx spike/01-curve-and-quote.ts"
+    "spike:quotes": "tsx spike/01-curve-and-quote.ts",
+    "doctor": "tsx spike/doctor.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "@coral-xyz/anchor": "^0.32.1",
+    "@irys/upload": "^0.0.15",
+    "@irys/upload-solana": "^0.1.8",
+    "@meteora-ag/cp-amm-sdk": "^1.5.1",
     "@meteora-ag/dynamic-bonding-curve-sdk": "^1.5.13",
     "@solana/web3.js": "^1.99.0",
     "bn.js": "^5.2.5",

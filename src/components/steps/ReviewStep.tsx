@@ -13,7 +13,7 @@ interface Props extends StepProps {
   goTo: (i: number) => void;
 }
 
-export function ReviewStep({ config: c, build, issues, solUsd, highlight, goTo }: Props) {
+export function ReviewStep({ config: c, build, issues, solUsd, highlight, goTo, logo }: Props) {
   const [copied, setCopied] = useState(false);
   const errors = issues.filter((i) => i.severity === "error");
   const warnings = issues.filter((i) => i.severity === "warning");
@@ -70,6 +70,10 @@ export function ReviewStep({ config: c, build, issues, solUsd, highlight, goTo }
           <div className="kv"><span className="k">Type</span><span className="v">SPL · 6 decimals</span></div>
           <div className="kv"><span className="k">Quote</span><span className="v">SOL</span></div>
           <div className="kv"><span className="k">Authorities</span><span className="v">Immutable</span></div>
+          <div className="kv">
+            <span className="k">Logo</span>
+            <span className="v">{c.token.metadataUri.trim() ? "Your metadata URI" : logo ? `${logo.name} (uploads at launch)` : "None"}</span>
+          </div>
         </div>
 
         <div className="card" style={{ marginTop: 0 }}>
@@ -130,7 +134,7 @@ export function ReviewStep({ config: c, build, issues, solUsd, highlight, goTo }
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <DeployPanel config={c} build={build} />
+        <DeployPanel config={c} build={build} logo={logo} />
       </div>
       <div style={{ display: "flex", gap: 10, marginTop: 12, alignItems: "center", flexWrap: "wrap" }}>
         <button className="btn sm ghost" onClick={copy}>

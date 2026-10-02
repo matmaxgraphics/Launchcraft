@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
+import { EVIDENCE, explorerUrl } from "@/lib/evidence";
 
 // A decorative back-loaded curve; the real one is drawn from the SDK in CurveLab.
 const HERO_PATH =
@@ -13,10 +14,10 @@ export default function Landing() {
           <BrandMark /> Launchcraft
         </div>
         <nav className="stepper" aria-label="Main">
-          <Link href="/create" className="step-pill">
+          <Link href="/create" className="step-pill nav-pill">
             <span className="t">Create</span>
           </Link>
-          <Link href="/launches" className="step-pill">
+          <Link href="/launches" className="step-pill nav-pill">
             <span className="t">My launches</span>
           </Link>
         </nav>
@@ -77,6 +78,29 @@ export default function Landing() {
           <circle cx="1000" cy="12" r="14" fill="#4ade80" opacity="0.15" />
         </svg>
       </div>
+
+      <section className="evidence" aria-labelledby="proof-h">
+        <div className="eyebrow">Proven on-chain</div>
+        <h2 id="proof-h">Not a mockup. The whole lifecycle ran on Solana devnet.</h2>
+        <p className="muted" style={{ margin: "0 0 22px", maxWidth: "62ch" }}>
+          Every step below was done through this app against real Meteora programs. Open any of them on the explorer.
+        </p>
+        <div className="evidence-grid">
+          {EVIDENCE.map((e) => (
+            <a key={e.id} className="evidence-card" href={explorerUrl(e)} target="_blank" rel="noreferrer">
+              <span className="eyebrow">{e.step}</span>
+              <b>{e.title}</b>
+              <span className="muted">{e.detail}</span>
+              <span className="mono faint" style={{ fontSize: 12 }}>
+                {e.id.slice(0, 6)}…{e.id.slice(-4)} ↗
+              </span>
+            </a>
+          ))}
+        </div>
+        <p className="faint" style={{ fontSize: 12.5, margin: "14px 0 0" }}>
+          Solana occasionally resets devnet, so old links can expire. The app itself works on any devnet pool.
+        </p>
+      </section>
 
       <section id="how" className="pillars">
         {[

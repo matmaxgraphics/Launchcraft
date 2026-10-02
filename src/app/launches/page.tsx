@@ -1,7 +1,7 @@
 import { LaunchesList } from "@/components/lens/LaunchesList";
 import { WalletProvider } from "@/wallet/WalletContext";
 
-export const metadata = { title: "My launches · Launchcraft" };
+export const metadata = { title: "My launches" };
 
 export default function LaunchesPage() {
   return (

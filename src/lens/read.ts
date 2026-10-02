@@ -10,7 +10,7 @@ const LAMPORTS = 1e9;
 const FEE_DENOMINATOR = 1e9;
 
 const TOKEN_METADATA_PROGRAM = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
-const TOKEN_PROGRAM = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+export const TOKEN_PROGRAM = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 const ASSOCIATED_TOKEN_PROGRAM = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 
 /* The SDK types these accounts via an Anchor IDL; the fields we read are stable, so use a narrow local view. */
@@ -41,6 +41,7 @@ interface RawConfig {
   swapBaseAmount: BnLike;
   migrationBaseThreshold: BnLike;
   migrationFeeOption: number;
+  feeClaimer: PublicKey;
   leftoverReceiver: PublicKey;
   tokenDecimal: number;
   poolFees: { baseFee: { cliffFeeNumerator: BnLike } };
@@ -59,6 +60,8 @@ export interface LaunchStatic {
   creator: string;
   name: string | null;
   symbol: string | null;
+  /** Metadata JSON URI from the mint's Metaplex account; the logo is resolved from it separately. */
+  metadataUri: string | null;
   supply: number;
   tokenDecimals: number;
   feeBps: number;
@@ -70,6 +73,8 @@ export interface LaunchStatic {
   migrationFeeOption: number;
   /** Who receives leftover tokens when they're withdrawn. */
   leftoverReceiver: string;
+  /** The "partner": the wallet that owns the config and can claim the partner share of trading fees. */
+  feeClaimer: string;
   /** Base tokens that move into the DAMM v2 pool at migration (whole tokens). */
   migrationBaseTokens: number;
   /** Supply held back as leftover: total - sold-on-curve allocation - migration allocation (whole tokens). */
@@ -125,11 +130,18 @@ export function parseAddress(s: string): PublicKey | null {
 
 /* ---------- token metadata (Metaplex), decoded by hand to avoid another dependency ---------- */
 
-export async function fetchTokenName(conn: Connection, mint: PublicKey): Promise<{ name: string | null; symbol: string | null }> {
+export interface TokenMeta {
+  name: string | null;
+  symbol: string | null;
+  /** The metadata JSON URI stored on the mint (may be a data: URI for launches without a logo). */
+  uri: string | null;
+}
+
+export async function fetchTokenName(conn: Connection, mint: PublicKey): Promise<TokenMeta> {
   try {
     const [pda] = PublicKey.findProgramAddressSync([new TextEncoder().encode("metadata"), TOKEN_METADATA_PROGRAM.toBytes(), mint.toBytes()], TOKEN_METADATA_PROGRAM);
     const info = await conn.getAccountInfo(pda, "confirmed");
-    if (!info) return { name: null, symbol: null };
+    if (!info) return { name: null, symbol: null, uri: null };
     const d = new Uint8Array(info.data);
     const dv = new DataView(d.buffer, d.byteOffset, d.byteLength);
     const dec = new TextDecoder();
@@ -140,9 +152,25 @@ export async function fetchTokenName(conn: Connection, mint: PublicKey): Promise
       o += 4 + len;
       return s;
     };
-    return { name: readStr() || null, symbol: readStr() || null };
+    return { name: readStr() || null, symbol: readStr() || null, uri: readStr() || null };
   } catch {
-    return { name: null, symbol: null };
+    return { name: null, symbol: null, uri: null };
+  }
+}
+
+/**
+ * Resolves a token's logo from its metadata URI. Only https URLs are fetched, with a short timeout, and only an
+ * https image URL is returned, so a hostile metadata file can't point the page at anything else.
+ */
+export async function fetchTokenImage(uri: string | null): Promise<string | null> {
+  if (!uri || !/^https:\/\//i.test(uri)) return null;
+  try {
+    const res = await fetch(uri, { signal: AbortSignal.timeout(6000), referrerPolicy: "no-referrer" });
+    if (!res.ok) return null;
+    const meta = (await res.json()) as { image?: unknown };
+    return typeof meta.image === "string" && /^https:\/\//i.test(meta.image) ? meta.image : null;
+  } catch {
+    return null;
   }
 }
 
@@ -159,7 +187,7 @@ export async function fetchLaunchStatic(conn: Connection, poolPk: PublicKey): Pr
     .map((p) => ({ sqrtEnd: BigInt(p.sqrtPrice.toString()), liquidity: BigInt(p.liquidity.toString()) }));
   const supply = num(cfg.preMigrationTokenSupply, 10 ** cfg.tokenDecimal);
   const curve: CurveModel = { supply, sqrtStart: BigInt(cfg.sqrtStartPrice.toString()), steps };
-  const { name, symbol } = await fetchTokenName(conn, state.baseMint);
+  const { name, symbol, uri } = await fetchTokenName(conn, state.baseMint);
 
   return {
     pool: poolPk.toBase58(),
@@ -168,6 +196,7 @@ export async function fetchLaunchStatic(conn: Connection, poolPk: PublicKey): Pr
     creator: state.creator.toBase58(),
     name,
     symbol,
+    metadataUri: uri,
     supply,
     tokenDecimals: cfg.tokenDecimal,
     feeBps: num(cfg.poolFees.baseFee.cliffFeeNumerator) / (FEE_DENOMINATOR / 10_000),
@@ -177,6 +206,7 @@ export async function fetchLaunchStatic(conn: Connection, poolPk: PublicKey): Pr
     curve,
     migrationFeeOption: cfg.migrationFeeOption,
     leftoverReceiver: cfg.leftoverReceiver.toBase58(),
+    feeClaimer: cfg.feeClaimer.toBase58(),
     migrationBaseTokens: num(cfg.migrationBaseThreshold, 10 ** cfg.tokenDecimal),
     leftoverTokens: Math.max(0, supply - num(cfg.swapBaseAmount, 10 ** cfg.tokenDecimal) - num(cfg.migrationBaseThreshold, 10 ** cfg.tokenDecimal)),
     lockedLiquidityPct: cfg.partnerPermanentLockedLiquidityPercentage + cfg.creatorPermanentLockedLiquidityPercentage,
