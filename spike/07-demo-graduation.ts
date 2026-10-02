@@ -25,11 +25,13 @@ async function main() {
     disconnect: async () => {},
   };
 
+  // optional args: <startMcapSol> <gradMcapSol> <name> <symbol>
+  const [aStart, aGrad, aName, aSym] = process.argv.slice(2);
   const config = defaultLaunchConfig();
-  config.token.name = "Demo Graduate";
-  config.token.symbol = "GRAD";
-  config.curve.startMarketCapSol = 0.1;
-  config.curve.graduationMarketCapSol = 1;
+  config.token.name = aName ?? "Demo Graduate";
+  config.token.symbol = aSym ?? "GRAD";
+  config.curve.startMarketCapSol = Number(aStart ?? 0.1);
+  config.curve.graduationMarketCapSol = Number(aGrad ?? 1);
   config.curve.weights = presetWeights("flat");
   config.curve.preset = "flat";
   const build = buildDbcConfig(config);

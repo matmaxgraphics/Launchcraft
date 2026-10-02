@@ -44,15 +44,20 @@ market cap and price, graduation progress, tokens sold, fees, activity, your hol
 A plain-language readout restates the chain state (e.g. "about 57.8 SOL more must be deposited").
 
 - **Trading:** real buys and sells (`swap2`), quoted from the pool's live accounts with 1% slippage. Buys use `PartialFill` so a buy that would pass graduation fills only what fits.
-- **Graduation:** progress tracks the quote reserve against the migration threshold, not market cap. Once complete, the program rejects every trade ("Pool is completed"), so the UI says so instead of offering a swap. Migration to DAMM v2 isn't run by Launchcraft yet.
+- **Graduation:** progress tracks the quote reserve against the migration threshold, not market cap. Once complete, the program rejects every trade ("Pool is completed"), so the UI says so instead of offering a swap.
+- **Migration to DAMM v2:** a completed pool shows a "Migrate to Meteora DAMM v2" card. It is **permissionless**: any connected wallet can run the single transaction (about 0.024 SOL of rent, one signature), which creates the DAMM v2 pool at the graduation price plus two position NFTs. The card previews the result before you sign, then LaunchLens shows the live DAMM v2 reserves, implied price and the position NFTs.
+  - The protocol takes the migration fee (20 bps on devnet, read from the pool) from **both** the SOL and the tokens. Predicted vs actual on devnet: 227,784,041.25 vs 227,784,041.08 tokens, 0.113891969 vs 0.113891969 SOL.
+  - **Leftover:** the supply held back at launch (the 5% buffer) can be sent to the config's leftover receiver with "Withdraw leftover". Anyone can pay the fee; the tokens always go to the receiver.
+  - Not built: trading on the DAMM v2 pool itself, claiming the position NFTs' fees or liquidity, and claiming creator/partner trading fees.
 - **Trust checks:** the live on-chain price is compared against the designed curve's math; the readout flags drift over 0.1%.
 - Token name/symbol are read from the Metaplex metadata account. Works for any pool, not just ones deployed here.
 
 Scripts: `spike/05-probe-accounts.ts <pool>` dumps raw account fields, `spike/06-trade-via-lib.ts <pool> [sol]` runs a real buy+sell headless
-and compares quote vs result, `spike/07-demo-graduation.ts` deploys a ~0.23 SOL-threshold launch and trades it to completion.
+and compares quote vs result, `spike/07-demo-graduation.ts [startMcap gradMcap name symbol]` deploys a small-threshold launch (default ~0.23 SOL) and trades it to completion,
+`spike/08-migrate.ts <pool>` migrates a completed pool to DAMM v2 and inspects the result, `spike/09-withdraw-leftover.ts <pool>` withdraws the leftover tokens.
 
 ## Status
 
-Built: Create flow, simulator, Copilot (rule-based), wallet + devnet deployment, LaunchLens with live trading.
-Not yet built: DAMM v2 migration, fee claiming, LLM-backed Copilot, metadata/logo upload.
+Built: Create flow, simulator, Copilot (rule-based), wallet + devnet deployment, LaunchLens with live trading, DAMM v2 migration and leftover withdrawal.
+Not yet built: trading on the DAMM v2 pool, fee/position claiming, LLM-backed Copilot, metadata/logo upload.
 # Launchcraft

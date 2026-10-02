@@ -106,7 +106,7 @@ export function TradePanel({ st, live, holdings, onTraded }: Props) {
 
       {complete ? (
         <p className="muted" style={{ margin: "16px 0 0" }}>
-          This curve is complete, so it no longer accepts trades.
+          {live.isMigrated ? "Trading has moved to the Meteora DAMM v2 pool, so the curve no longer accepts trades." : "This curve is complete, so it no longer accepts trades. Migrate it to DAMM v2 above to open trading there."}
         </p>
       ) : (
         <>

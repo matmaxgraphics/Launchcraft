@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppHeader } from "../AppHeader";
 import { CurveChart } from "../CurveChart";
+import { MigrationPanel } from "./MigrationPanel";
 import { TradePanel } from "./TradePanel";
+import { fetchDammInfo, type DammInfo } from "@/lens/migrate";
 import { explorerAddress, explorerTx, getConnection, shortAddr } from "@/deploy/rpc";
 import { lensReads, relTime, statusOf } from "@/lens/insights";
 import { fetchActivity, fetchLaunchLive, fetchLaunchStatic, fetchTokenBalance, parseAddress, type ActivityRow, type LaunchLive, type LaunchStatic } from "@/lens/read";
@@ -19,12 +21,15 @@ export function LaunchLens({ poolAddress }: { poolAddress: string }) {
   const { wallet } = useWallet();
   const [st, setSt] = useState<LaunchStatic | null>(null);
   const [live, setLive] = useState<LaunchLive | null>(null);
+  const [damm, setDamm] = useState<DammInfo | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [holdings, setHoldings] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [solUsd, setSolUsd] = useState(150);
   const [now, setNow] = useState(Date.now());
   const [copied, setCopied] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [slow, setSlow] = useState(false);
   const stRef = useRef<LaunchStatic | null>(null);
 
   useEffect(() => {
@@ -61,7 +66,15 @@ export function LaunchLens({ poolAddress }: { poolAddress: string }) {
     return () => {
       cancelled = true;
     };
-  }, [poolAddress]);
+  }, [poolAddress, attempt]);
+
+  // The public devnet RPC can stall; after a while offer a retry instead of an endless spinner.
+  useEffect(() => {
+    setSlow(false);
+    if (st || error) return;
+    const t = setTimeout(() => setSlow(true), 15_000);
+    return () => clearTimeout(t);
+  }, [st, error, attempt]);
 
   const refresh = useCallback(async () => {
     const s = stRef.current;
@@ -77,6 +90,9 @@ export function LaunchLens({ poolAddress }: { poolAddress: string }) {
       setActivity(a);
       setHoldings(h);
       setError(null);
+      // once graduated, also read the DAMM v2 pool the liquidity moved into
+      if (l.isMigrated) fetchDammInfo(conn, s).then(setDamm).catch(() => {});
+      else setDamm(null);
     } catch (e) {
       // keep the last good data on screen; surface only if we have nothing yet
       setError((prev) => prev ?? (e instanceof Error ? e.message : String(e)));
@@ -100,7 +116,7 @@ export function LaunchLens({ poolAddress }: { poolAddress: string }) {
     return () => clearInterval(t);
   }, []);
 
-  const reads = useMemo(() => (st && live ? lensReads(st, live) : []), [st, live]);
+  const reads = useMemo(() => (st && live ? lensReads(st, live, damm) : []), [st, live, damm]);
   const status = live ? statusOf(live) : null;
   const sim = useMemo(() => (live ? { quoteSol: live.quoteReserveSol, tokensSold: live.tokensSold } : null), [live]);
 
@@ -129,10 +145,20 @@ export function LaunchLens({ poolAddress }: { poolAddress: string }) {
       <>
         <AppHeader />
         <div className="layout" style={{ gridTemplateColumns: "1fr" }}>
-          <p className="muted" role="status">
-            <i className="spin" style={{ display: "inline-block", marginRight: 10, verticalAlign: "middle" }} />
-            Reading the pool from devnet…
-          </p>
+          <div role="status">
+            <p className="muted" style={{ margin: 0 }}>
+              <i className="spin" style={{ display: "inline-block", marginRight: 10, verticalAlign: "middle" }} />
+              Reading the pool from devnet…
+            </p>
+            {slow && (
+              <p className="faint" style={{ margin: "12px 0 0", fontSize: 13.5 }}>
+                This is taking longer than usual; the public devnet RPC may be slow.{" "}
+                <button className="link-btn" onClick={() => setAttempt((a) => a + 1)}>
+                  Try again
+                </button>
+              </p>
+            )}
+          </div>
         </div>
       </>
     );
@@ -250,6 +276,12 @@ export function LaunchLens({ poolAddress }: { poolAddress: string }) {
             </div>
             <CurveChart curve={st.curve} sim={sim} solUsd={solUsd} />
           </div>
+
+          {(live.curveComplete || live.isMigrated) && (
+            <div style={{ marginTop: 16 }}>
+              <MigrationPanel st={st} live={live} damm={damm} onChanged={refresh} />
+            </div>
+          )}
 
           <div style={{ marginTop: 16 }}>
             <TradePanel st={st} live={live} holdings={holdings} onTraded={refresh} />

@@ -2,7 +2,8 @@
  * LaunchLens readouts: raw chain state -> plain-language statements. Deterministic and factual;
  * no predictions or advice. Every figure is derived from the live accounts.
  */
-import { fmtNum, fmtPct, fmtSol } from "@/lib/fmt";
+import { fmtNum, fmtPct, fmtSol, fmtTokens } from "@/lib/fmt";
+import type { DammInfo } from "./migrate";
 import type { LaunchLive, LaunchStatic } from "./read";
 
 export interface Read {
@@ -23,7 +24,7 @@ export function modelDrift(live: LaunchLive): number {
   return live.price === 0 ? 0 : Math.abs(live.modelPrice - live.price) / live.price;
 }
 
-export function lensReads(st: LaunchStatic, live: LaunchLive): Read[] {
+export function lensReads(st: LaunchStatic, live: LaunchLive, damm?: DammInfo | null): Read[] {
   const out: Read[] = [];
   const feeRate = st.feeBps / 10_000;
   const remaining = Math.max(0, st.thresholdSol - live.quoteReserveSol);
@@ -32,15 +33,17 @@ export function lensReads(st: LaunchStatic, live: LaunchLive): Read[] {
   if (status === "migrated") {
     out.push({
       id: "progress",
-      text: "This launch has graduated and its liquidity has migrated to a Meteora DAMM v2 pool.",
-      why: "Trading continues on DAMM v2, not on the bonding curve.",
+      text: damm?.exists
+        ? `This launch has graduated. Its liquidity now sits in a Meteora DAMM v2 pool: ${fmtTokens(damm.baseTokens)} tokens and ${fmtSol(damm.quoteSol)}.`
+        : "This launch has graduated and its liquidity has migrated to a Meteora DAMM v2 pool.",
+      why: "Trading continues on DAMM v2, not on the bonding curve. The pool opened at the graduation price.",
       tone: "ok",
     });
   } else if (status === "complete") {
     out.push({
       id: "progress",
       text: `The curve is complete: ${fmtSol(live.quoteReserveSol)} has been deposited, reaching the ${fmtSol(st.thresholdSol)} threshold.`,
-      why: "Trading on the curve has finished. The pool is ready to migrate to Meteora DAMM v2; Launchcraft doesn't run the migration transactions yet.",
+      why: "Trading on the curve has finished. The pool is ready to migrate to Meteora DAMM v2, and anyone can trigger the migration.",
       tone: "ok",
     });
   } else if (live.quoteReserveSol === 0) {

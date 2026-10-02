@@ -353,3 +353,7 @@ a.link-btn { display: inline; }
 .launch-row { display: flex; align-items: center; gap: 14px; padding: 12px 10px; margin: 0 -10px; border-radius: 11px; transition: background .15s; }
 .launch-row:hover { background: var(--panel-2); }
 .launch-row + .launch-row { border-top: 1px solid var(--line-soft); }
+
+/* ---------- migration ---------- */
+.migrate-card { border-color: var(--accent-line); background: linear-gradient(180deg, rgba(143,124,255,0.08), var(--panel) 50%); }
+.migrate-card.done { border-color: rgba(143,124,255,0.28); }

@@ -31,11 +31,17 @@ interface RawPool {
   partnerQuoteFee: BnLike;
   creatorQuoteFee: BnLike;
   metrics: { totalTradingQuoteFee: BnLike; totalProtocolQuoteFee: BnLike };
+  protocolLiquidityMigrationFeeBps: number;
+  isWithdrawLeftover: number;
 }
 interface RawConfig {
   sqrtStartPrice: BnLike;
   migrationQuoteThreshold: BnLike;
   preMigrationTokenSupply: BnLike;
+  swapBaseAmount: BnLike;
+  migrationBaseThreshold: BnLike;
+  migrationFeeOption: number;
+  leftoverReceiver: PublicKey;
   tokenDecimal: number;
   poolFees: { baseFee: { cliffFeeNumerator: BnLike } };
   curve: { sqrtPrice: BnLike; liquidity: BnLike }[];
@@ -60,6 +66,15 @@ export interface LaunchStatic {
   thresholdSol: number;
   startMarketCapSol: number;
   curve: CurveModel;
+  /** Index into Meteora's DAMM v2 migration fee configs. */
+  migrationFeeOption: number;
+  /** Who receives leftover tokens when they're withdrawn. */
+  leftoverReceiver: string;
+  /** Base tokens that move into the DAMM v2 pool at migration (whole tokens). */
+  migrationBaseTokens: number;
+  /** Supply held back as leftover: total - sold-on-curve allocation - migration allocation (whole tokens). */
+  leftoverTokens: number;
+  lockedLiquidityPct: number;
   /** Raw accounts, kept for the SDK's swap quoting. */
   rawConfig: unknown;
 }
@@ -76,6 +91,9 @@ export interface LaunchLive {
   modelPrice: number;
   isMigrated: boolean;
   curveComplete: boolean;
+  /** Protocol's cut of the SOL when it migrates, in basis points (read from the pool). */
+  migrationFeeBps: number;
+  leftoverWithdrawn: boolean;
   fees: { creatorSol: number; partnerSol: number; protocolSol: number; totalTradingSol: number };
   updatedAt: number;
   /** Raw pool account, kept for the SDK's swap quoting. */
@@ -157,6 +175,11 @@ export async function fetchLaunchStatic(conn: Connection, poolPk: PublicKey): Pr
     thresholdSol: num(cfg.migrationQuoteThreshold, LAMPORTS),
     startMarketCapSol: sqrtToPrice(curve.sqrtStart) * supply,
     curve,
+    migrationFeeOption: cfg.migrationFeeOption,
+    leftoverReceiver: cfg.leftoverReceiver.toBase58(),
+    migrationBaseTokens: num(cfg.migrationBaseThreshold, 10 ** cfg.tokenDecimal),
+    leftoverTokens: Math.max(0, supply - num(cfg.swapBaseAmount, 10 ** cfg.tokenDecimal) - num(cfg.migrationBaseThreshold, 10 ** cfg.tokenDecimal)),
+    lockedLiquidityPct: cfg.partnerPermanentLockedLiquidityPercentage + cfg.creatorPermanentLockedLiquidityPercentage,
     rawConfig: cfg,
   };
 }
@@ -179,6 +202,8 @@ export async function fetchLaunchLive(conn: Connection, st: LaunchStatic): Promi
     modelPrice: model.price,
     isMigrated: p.isMigrated === 1,
     curveComplete: quoteReserveSol >= st.thresholdSol || num(p.finishCurveTimestamp) > 0,
+    migrationFeeBps: p.protocolLiquidityMigrationFeeBps,
+    leftoverWithdrawn: p.isWithdrawLeftover === 1,
     fees: {
       creatorSol: num(p.creatorQuoteFee, LAMPORTS),
       partnerSol: num(p.partnerQuoteFee, LAMPORTS),

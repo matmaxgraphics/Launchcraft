@@ -7,7 +7,7 @@ import { fetchTokenName, parseAddress, type LaunchLive, type LaunchStatic } from
 const st = { thresholdSol: 100, feeBps: 100, startMarketCapSol: 30, supply: 1_000_000_000 } as LaunchStatic;
 const live = (o: Partial<LaunchLive> = {}): LaunchLive => ({
   price: 3e-8, modelPrice: 3e-8, marketCapSol: 30, quoteReserveSol: 0, progress: 0, tokensSold: 0,
-  isMigrated: false, curveComplete: false,
+  isMigrated: false, curveComplete: false, migrationFeeBps: 20, leftoverWithdrawn: false,
   fees: { creatorSol: 0, partnerSol: 0, protocolSol: 0, totalTradingSol: 0 },
   updatedAt: 0, rawPool: null, ...o,
 });
@@ -38,8 +38,16 @@ test("reads: tiny progress keeps two decimals instead of rounding to 0.0%", () =
 });
 
 test("reads: complete and migrated states explain what happens next", () => {
-  assert.match(lensReads(st, live({ curveComplete: true, quoteReserveSol: 100, progress: 1 }))[0].text, /curve is complete/);
+  const complete = lensReads(st, live({ curveComplete: true, quoteReserveSol: 100, progress: 1 }))[0];
+  assert.match(complete.text, /curve is complete/);
+  assert.match(complete.why!, /anyone can trigger the migration/);
   assert.match(lensReads(st, live({ curveComplete: true, isMigrated: true }))[0].text, /migrated to a Meteora DAMM v2/);
+});
+
+test("reads: once migrated, the readout reports the DAMM v2 pool's real reserves", () => {
+  const damm = { pool: "x", exists: true, baseTokens: 227_784_002, quoteSol: 0.2278, impliedPrice: 1e-9 };
+  const t = lensReads(st, live({ curveComplete: true, isMigrated: true }), damm)[0].text;
+  assert.match(t, /DAMM v2 pool: 227\.78M tokens and 0\.2278 SOL/);
 });
 
 test("reads: fee line only appears once fees exist", () => {
