@@ -7,7 +7,11 @@ export const maxDuration = 60;
 
 /** Is logo upload available? (Lets the UI hide the picker instead of failing at deploy time.) */
 export async function GET() {
-  return Response.json({ configured: uploaderStatus().configured });
+  try {
+    return Response.json({ configured: uploaderStatus().configured });
+  } catch {
+    return Response.json({ configured: false });
+  }
 }
 
 // Tiny in-memory limiter: the uploader wallet is real (devnet) money, so don't let one client drain it.

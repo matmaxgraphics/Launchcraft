@@ -91,6 +91,7 @@ Then click through once by hand: Create → Fill with an example → CurveLab �
 | Symptom | Likely cause and fix |
 |---|---|
 | Build fails with a type error | Run `npm run typecheck` locally; fix, push. |
+| `/api/upload` returns an empty **500** (smoke test: "Unexpected end of JSON input") | The function crashed while loading. Seen once: Turbopack's `serverExternalPackages` renames packages to hash-suffixed links inside `.next/node_modules`, which Vercel doesn't preserve. Fixed by not listing `@irys/*` there (see the note in `next.config.ts`) and loading Irys lazily. Don't re-add it. If a 500 ever recurs, open the deployment's **Logs** in Vercel and look for a "Cannot find module" line. |
 | Logo upload says it isn't set up | `IRYS_UPLOADER_KEY` missing, malformed, or added after the last deploy (redeploy). It must be the raw JSON array. |
 | "The uploader wallet is out of devnet SOL" | Fund it (see above). |
 | AI box says "aren't set up" | `ANTHROPIC_API_KEY` missing or added without a redeploy. |

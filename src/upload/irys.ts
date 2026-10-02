@@ -7,8 +7,6 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { Uploader } from "@irys/upload";
-import { Solana } from "@irys/upload-solana";
 import { Keypair } from "@solana/web3.js";
 import { RPC_URL } from "@/deploy/rpc";
 
@@ -43,6 +41,15 @@ export function uploaderStatus(): { configured: boolean; address: string | null 
 
 let uploader: ReturnType<typeof create> | null = null;
 async function create(key: Uint8Array) {
+  // Loaded lazily, not at module top: the status check (GET /api/upload) must never depend on this heavy SDK
+  // loading, and if it can't load on some platform the caller gets a clear message instead of an empty 500.
+  let Uploader, Solana;
+  try {
+    [{ Uploader }, { Solana }] = await Promise.all([import("@irys/upload"), import("@irys/upload-solana")]);
+  } catch (e) {
+    uploader = null; // allow a later retry
+    throw new UploadError(`Logo storage couldn't start on this server (${e instanceof Error ? e.message.slice(0, 120) : "unknown error"}). You can paste a metadata URI instead.`, 503);
+  }
   return Uploader(Solana).withWallet(key).withRpc(RPC_URL).devnet();
 }
 function getUploader() {
