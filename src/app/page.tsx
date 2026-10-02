@@ -12,6 +12,14 @@ export default function Landing() {
         <div className="brand">
           <BrandMark /> Launchcraft
         </div>
+        <nav className="stepper" aria-label="Main">
+          <Link href="/create" className="step-pill">
+            <span className="t">Create</span>
+          </Link>
+          <Link href="/launches" className="step-pill">
+            <span className="t">My launches</span>
+          </Link>
+        </nav>
         <span className="net-chip">
           <span className="net-dot" /> Built on Meteora DBC
         </span>

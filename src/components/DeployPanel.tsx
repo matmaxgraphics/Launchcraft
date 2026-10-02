@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { WalletModal } from "./WalletButton";
 import { DeployError, deployLaunch, type DeployProgress, type DeployStage, type PartialDeploy } from "@/deploy/deploy";
@@ -151,15 +152,18 @@ export function DeployPanel({ config, build }: Props) {
           >
             {copied ? "Copied ✓" : "Copy pool address"}
           </button>
-          <a className="btn accent" href={explorerAddress(record.pool)} target="_blank" rel="noreferrer">
-            View on Explorer ↗
+          <Link className="btn accent" href={`/launch/${record.pool}`}>
+            Open LaunchLens →
+          </Link>
+          <a className="btn" href={explorerAddress(record.pool)} target="_blank" rel="noreferrer">
+            Explorer ↗
           </a>
           <button className="btn ghost" onClick={reset}>
             Launch another
           </button>
         </div>
         <p className="faint" style={{ fontSize: 12.5, margin: "14px 0 0" }}>
-          Saved in this browser. Anyone can trade this pool on devnet by its address; LaunchLens (next) will track it live.
+          Saved in this browser. LaunchLens tracks it live, and anyone can trade this pool on devnet by its address.
         </p>
       </div>
     );

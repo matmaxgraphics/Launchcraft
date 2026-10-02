@@ -37,8 +37,22 @@ config back and compares its graduation threshold with the design ("Verified on-
 - **Records:** launches are remembered in this browser (`src/deploy/records.ts`) for LaunchLens.
 - `npx tsx spike/04-deploy-via-lib.ts` runs the same deploy engine headless with the `.keys/devnet.json` keypair. `spike/fund.ts <addr> [sol]` sends devnet SOL from it.
 
+## LaunchLens (`/launch/<pool>`, list at `/launches`)
+
+Live dashboard for any devnet DBC pool, polled every 6s (paused while the tab is hidden):
+market cap and price, graduation progress, tokens sold, fees, activity, your holdings, and the live position drawn on the designed curve.
+A plain-language readout restates the chain state (e.g. "about 57.8 SOL more must be deposited").
+
+- **Trading:** real buys and sells (`swap2`), quoted from the pool's live accounts with 1% slippage. Buys use `PartialFill` so a buy that would pass graduation fills only what fits.
+- **Graduation:** progress tracks the quote reserve against the migration threshold, not market cap. Once complete, the program rejects every trade ("Pool is completed"), so the UI says so instead of offering a swap. Migration to DAMM v2 isn't run by Launchcraft yet.
+- **Trust checks:** the live on-chain price is compared against the designed curve's math; the readout flags drift over 0.1%.
+- Token name/symbol are read from the Metaplex metadata account. Works for any pool, not just ones deployed here.
+
+Scripts: `spike/05-probe-accounts.ts <pool>` dumps raw account fields, `spike/06-trade-via-lib.ts <pool> [sol]` runs a real buy+sell headless
+and compares quote vs result, `spike/07-demo-graduation.ts` deploys a ~0.23 SOL-threshold launch and trades it to completion.
+
 ## Status
 
-Built: Create flow, simulator, Copilot (rule-based), wallet + devnet deployment.
-Not yet built: LaunchLens (live pool dashboard), real trading against a deployed pool, LLM-backed Copilot, metadata/logo upload.
+Built: Create flow, simulator, Copilot (rule-based), wallet + devnet deployment, LaunchLens with live trading.
+Not yet built: DAMM v2 migration, fee claiming, LLM-backed Copilot, metadata/logo upload.
 # Launchcraft

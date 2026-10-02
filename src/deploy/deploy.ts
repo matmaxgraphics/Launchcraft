@@ -67,7 +67,7 @@ export function placeholderMetadataUri(name: string, symbol: string): string {
   return `data:application/json,${encodeURIComponent(JSON.stringify({ name, symbol }))}`;
 }
 
-async function signSendConfirm(conn: Connection, tx: Transaction, wallet: WalletHandle, extraSigners: Keypair[]): Promise<string> {
+export async function signSendConfirm(conn: Connection, tx: Transaction, wallet: WalletHandle, extraSigners: Keypair[]): Promise<string> {
   const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash("confirmed");
   tx.feePayer = wallet.publicKey;
   tx.recentBlockhash = blockhash;
