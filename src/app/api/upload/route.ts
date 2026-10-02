@@ -2,6 +2,8 @@ import { buildMetadata, MAX_IMAGE_BYTES, sniffImage, validateUpload } from "@/up
 import { UploadError, uploadBytes, uploaderStatus } from "@/upload/irys";
 
 export const runtime = "nodejs";
+// Storing two files on Irys takes a few seconds; don't let a serverless host's short default cut it off.
+export const maxDuration = 60;
 
 /** Is logo upload available? (Lets the UI hide the picker instead of failing at deploy time.) */
 export async function GET() {

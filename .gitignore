@@ -6,3 +6,4 @@ spike/out
 /.next/
 next-env.d.ts
 .next/
+*.tsbuildinfo

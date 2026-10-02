@@ -63,9 +63,9 @@ See the table in the [README](../README.md#proven-on-devnet) and the landing pag
 - The AI answers need an Anthropic API key and were covered by tests with a fake client plus a check of the no-key path, not a live call.
 - Only the 0.25% migration fee tier was exercised.
 
-## Deploying (needs your decision)
+## Deploying
 
-The app runs with `npm run build && npm start -- -p 3100`. A public deployment publishes it under your account and has cost implications, so decide these first:
+Step-by-step guide with the exact environment variables: [`DEPLOY.md`](DEPLOY.md). The app also runs locally with `npm run build && npm start -- -p 3100`. A public deployment publishes it under your account and has cost implications, so keep these in mind:
 
 - **Uploads spend devnet SOL** from the server-held uploader wallet (`IRYS_UPLOADER_KEY` env var), about 0.00004 SOL each. The route is rate-limited (in-memory; use a shared store behind a load balancer).
 - **AI answers spend your Anthropic credit** (`ANTHROPIC_API_KEY`); questions are rate-limited to 30/hour per connection. Omit the key and the AI box simply explains it is off.

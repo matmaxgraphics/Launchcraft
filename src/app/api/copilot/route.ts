@@ -2,6 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { MAX_CONTEXT_BYTES, MAX_QUESTION_CHARS, mapError, streamAnswer, type StreamClient } from "@/copilot/ai";
 
 export const runtime = "nodejs";
+// Answers stream for a while; keep the function alive long enough on serverless hosts.
+export const maxDuration = 60;
 
 /** Advisory only: a logged-in `ant` profile also works without these env vars, so "false" isn't definitive. */
 export async function GET() {

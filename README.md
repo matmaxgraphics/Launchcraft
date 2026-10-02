@@ -135,4 +135,5 @@ Honest list of what is **not** done or **not verified**:
 ## More
 
 - [`docs/DEMO.md`](docs/DEMO.md): a 4-minute walkthrough script and pre-flight checklist.
+- [`docs/DEPLOY.md`](docs/DEPLOY.md): deploy to Vercel, with the exact environment variables, plus `npm run smoke` to test the live URL.
 - [`docs/SUBMISSION.md`](docs/SUBMISSION.md): the write-up for the hackathon listing.
