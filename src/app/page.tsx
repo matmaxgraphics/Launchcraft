@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
 import { EVIDENCE, explorerUrl } from "@/lib/evidence";
+import { BUILT_ON, Faq, FeatureGrid, FinalCta, Footer, Lifecycle, Showcase, STATS, Trust } from "@/components/landing/Sections";
+import "./landing.css";
 
 // A decorative back-loaded curve; the real one is drawn from the SDK in CurveLab.
 const HERO_PATH =
@@ -14,6 +16,9 @@ export default function Landing() {
           <BrandMark /> Launchcraft
         </div>
         <nav className="stepper" aria-label="Main">
+          <a href="#features" className="step-pill nav-pill">
+            <span className="t">Features</span>
+          </a>
           <Link href="/create" className="step-pill nav-pill">
             <span className="t">Create</span>
           </Link>
@@ -79,6 +84,27 @@ export default function Landing() {
         </svg>
       </div>
 
+      <section className="lp-strip" aria-label="Built with">
+        <span className="eyebrow">Built on</span>
+        {BUILT_ON.map((n) => (
+          <span key={n} className="lp-logo">
+            {n}
+          </span>
+        ))}
+      </section>
+
+      <section className="lp-stats" aria-label="By the numbers">
+        {STATS.map(([n, l]) => (
+          <div key={l}>
+            <b>{n}</b>
+            <span>{l}</span>
+          </div>
+        ))}
+      </section>
+
+      <FeatureGrid />
+      <Lifecycle />
+      <Showcase />
       <section className="evidence" aria-labelledby="proof-h">
         <div className="eyebrow">Proven on-chain</div>
         <h2 id="proof-h">Not a mockup. The whole lifecycle ran on Solana devnet.</h2>
@@ -102,20 +128,10 @@ export default function Landing() {
         </p>
       </section>
 
-      <section id="how" className="pillars">
-        {[
-          ["01 · Design", "CurveLab", "Draw how liquidity is spread across 16 price steps. Start from a preset or paint your own."],
-          ["02 · Simulate", "Try the launch", "Run buys and sells against your curve before a single transaction is signed."],
-          ["03 · Understand", "Launch Copilot", "Plain-language, factual readouts of what your configuration actually does."],
-          ["04 · Launch", "Deploy to Meteora", "Two transactions put your config and pool on-chain, then LaunchLens takes over."],
-        ].map(([e, t, d]) => (
-          <div key={t} className="pillar">
-            <div className="eyebrow">{e}</div>
-            <h3>{t}</h3>
-            <p>{d}</p>
-          </div>
-        ))}
-      </section>
+      <Trust />
+      <Faq />
+      <FinalCta />
+      <Footer />
     </>
   );
 }

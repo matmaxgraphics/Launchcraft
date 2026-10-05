@@ -9,8 +9,8 @@ Copy-ready text for the Meteora DBC track listing. Items marked **TODO** need yo
 | **Name** | Launchcraft |
 | **Tagline** | Design it. Simulate it. Launch it. |
 | **Track** | Meteora Dynamic Bonding Curve (Superteam Earn / Solana Global Hackathon) |
-| **Repository** | **TODO**: repo URL |
-| **Live demo** | **TODO**: deployed URL (see "Deploying" below) |
+| **Repository** | https://github.com/matmaxgraphics/Launchcraft |
+| **Live demo** | https://launchcraft-six.vercel.app |
 | **Demo video** | **TODO**: video URL (script in [`DEMO.md`](DEMO.md)) |
 | **Network** | Solana devnet |
 | **Stack** | Next.js 16, React 19, TypeScript, `@meteora-ag/dynamic-bonding-curve-sdk`, `@meteora-ag/cp-amm-sdk`, Irys, Claude API |
