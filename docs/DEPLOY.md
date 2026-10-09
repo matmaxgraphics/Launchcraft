@@ -30,6 +30,8 @@ Add each under **Settings → Environment Variables** (or in the import screen).
 |---|---|---|---|
 | `IRYS_UPLOADER_KEY` | Logo and metadata upload | **Yes (server only)** | The contents of `.keys/uploader.json`: one line like `[12,34,…]` (64 numbers). Copy it without displaying it: `Get-Content .keys\uploader.json -Raw \| Set-Clipboard`, then paste. |
 | `ANTHROPIC_API_KEY` | AI Copilot answers | **Yes (server only)** | A key from <https://console.anthropic.com/>. Optional: leave it out and the AI box simply says it's off. |
+| `GROQ_API_KEY` | AI Copilot answers (free tier) | **Yes (server only)** | A key from <https://console.groq.com/keys>. Used only when no `ANTHROPIC_API_KEY` is set. |
+| `GROQ_MODEL` | Optional | No | Defaults to `openai/gpt-oss-120b`. Change it if Groq retires that model. |
 | `COPILOT_MODEL` | Optional | No | Defaults to `claude-opus-5-5`. Set a cheaper model to lower cost. |
 | `NEXT_PUBLIC_RPC_URL` | Optional, recommended | **No: it is public** | A devnet RPC URL. Leave unset to use the public endpoint (it rate-limits). It **must** be devnet; the app refuses anything else. |
 | `NEXT_PUBLIC_SITE_URL` | Optional | No | Only if you add a custom domain (e.g. `https://launchcraft.xyz`); otherwise the share card uses Vercel's production URL automatically. |
@@ -94,7 +96,7 @@ Then click through once by hand: Create → Fill with an example → CurveLab �
 | `/api/upload` returns an empty **500** (smoke test: "Unexpected end of JSON input") | The function crashed while loading. Seen once: Turbopack's `serverExternalPackages` renames packages to hash-suffixed links inside `.next/node_modules`, which Vercel doesn't preserve. Fixed by not listing `@irys/*` there (see the note in `next.config.ts`) and loading Irys lazily. Don't re-add it. If a 500 ever recurs, open the deployment's **Logs** in Vercel and look for a "Cannot find module" line. |
 | Logo upload says it isn't set up | `IRYS_UPLOADER_KEY` missing, malformed, or added after the last deploy (redeploy). It must be the raw JSON array. |
 | "The uploader wallet is out of devnet SOL" | Fund it (see above). |
-| AI box says "aren't set up" | `ANTHROPIC_API_KEY` missing or added without a redeploy. |
+| AI box says "aren't set up" | `ANTHROPIC_API_KEY` / `GROQ_API_KEY` missing or added without a redeploy. |
 | AI box says the key was rejected | The key is wrong or revoked; replace it and redeploy. |
 | Pages load but data never arrives | The public devnet RPC is throttling; set `NEXT_PUBLIC_RPC_URL` to a dedicated devnet endpoint and redeploy. |
 | Share card shows no image | Open `/opengraph-image` directly; if that works, social sites cache aggressively, so re-share after a while or use their card validator. |

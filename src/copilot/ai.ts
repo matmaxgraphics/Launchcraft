@@ -113,7 +113,7 @@ export function mapError(e: unknown): MappedError {
   const m = e instanceof Error ? e.message : String(e);
   // the SDK throws a plain error when it can't find any credentials
   if (/api.?key|auth|credential|resolve/i.test(m)) {
-    return { status: 503, message: "AI answers aren't set up on this server yet. Add ANTHROPIC_API_KEY to .env.local and restart the dev server. The rule-based Copilot still works." };
+    return { status: 503, message: "AI answers aren't set up on this server yet. Add ANTHROPIC_API_KEY (or a free GROQ_API_KEY) to .env.local and restart the dev server. The rule-based Copilot still works." };
   }
   return { status: 500, message: "Something went wrong generating the answer." };
 }

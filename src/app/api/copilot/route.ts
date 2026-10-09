@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { activeProvider, mapGroqError, streamGroq } from "@/copilot/groq";
 import { MAX_CONTEXT_BYTES, MAX_QUESTION_CHARS, mapError, streamAnswer, type StreamClient } from "@/copilot/ai";
 
 export const runtime = "nodejs";
@@ -7,7 +8,7 @@ export const maxDuration = 60;
 
 /** Advisory only: a logged-in `ant` profile also works without these env vars, so "false" isn't definitive. */
 export async function GET() {
-  return Response.json({ configured: Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN) });
+  return Response.json({ configured: Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN || process.env.GROQ_API_KEY) });
 }
 
 // The API key is real money, so cap questions per connection. In-memory: fine for one server, not for a fleet.
@@ -45,21 +46,28 @@ export async function POST(req: Request) {
   if (question.length > MAX_QUESTION_CHARS) return fail(`Keep questions under ${MAX_QUESTION_CHARS} characters.`, 400);
   if (JSON.stringify(body.context ?? {}).length > MAX_CONTEXT_BYTES) return fail("That request is too large.", 413);
 
-  let client: Anthropic;
-  try {
-    client = new Anthropic();
-  } catch (e) {
-    const m = mapError(e);
-    return fail(m.message, m.status);
+  // Anthropic (Claude) when its key is set, otherwise Groq's free tier when GROQ_API_KEY is set.
+  const groq = activeProvider() === "groq";
+  const toError = groq ? mapGroqError : mapError;
+  let gen: AsyncGenerator<string>;
+  if (groq) {
+    gen = streamGroq(question, body.context, { apiKey: process.env.GROQ_API_KEY! });
+  } else {
+    let client: Anthropic;
+    try {
+      client = new Anthropic();
+    } catch (e) {
+      const m = mapError(e);
+      return fail(m.message, m.status);
+    }
+    gen = streamAnswer(client as unknown as StreamClient, question, body.context);
   }
-
   // Pull the first chunk before replying so auth/validation errors come back as a proper HTTP error, not a broken stream.
-  const gen = streamAnswer(client as unknown as StreamClient, question, body.context);
   let first: IteratorResult<string>;
   try {
     first = await gen.next();
   } catch (e) {
-    const m = mapError(e);
+    const m = toError(e);
     return fail(m.message, m.status);
   }
 
@@ -71,7 +79,7 @@ export async function POST(req: Request) {
         for await (const chunk of gen) controller.enqueue(enc.encode(chunk));
         controller.close();
       } catch (e) {
-        controller.error(new Error(mapError(e).message));
+        controller.error(new Error(toError(e).message));
       }
     },
     cancel() {

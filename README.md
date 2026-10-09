@@ -79,6 +79,7 @@ Open `/create`, press **Fill with an example**, and walk the four steps. Pick **
 
 Copy `.env.example` to `.env.local`. Everything is optional.
 
+- `GROQ_API_KEY`: a free alternative for the **Ask the Copilot** box (used when no Anthropic key is set; same grounded prompt and safety rules).
 - `ANTHROPIC_API_KEY`: enables the **Ask the Copilot** box. Without it the rule-based Copilot still works and the box explains how to enable AI answers.
 - Logo upload uses a small server-side wallet (`.keys/uploader.json`, created with `npx tsx spike/new-key.ts uploader`, funded with ~0.03 devnet SOL) that pays about 0.00004 SOL per upload on Irys devnet. Or paste your own metadata URI.
 - `NEXT_PUBLIC_RPC_URL`: a steadier devnet RPC (it **must** be devnet; see below).
