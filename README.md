@@ -126,7 +126,7 @@ The public faucet only allows a request every few hours, so every spending scrip
 
 Honest list of what is **not** done or **not verified**:
 
-- **Devnet only.** Mainnet would need real storage and RPC, a funded and secured uploader (or a user-paid upload), and a security review.
+- **Devnet only.** Mainnet would need real storage and RPC, a funded and secured uploader (or a user-paid upload), and a security review. The plan is in [`docs/MAINNET.md`](docs/MAINNET.md).
 - **No trading on the migrated DAMM v2 pool** inside the app; LaunchLens shows its reserves and your positions, not a swap UI for it.
 - **Not built:** surplus and migration-fee withdrawals (zero for Launchcraft pools, which stop exactly at the threshold); migration fee tiers other than 0.25% (the code supports options 0-6, only option 0 was exercised).
 - **Not exercised live in this environment:** Phantom, Solflare and Backpack (no extension was available; the burner wallet was used throughout), and the AI answers (no API key; the prompt layer and streaming are covered by tests with a fake client, and the no-key path was checked against the running server).
@@ -136,5 +136,10 @@ Honest list of what is **not** done or **not verified**:
 ## More
 
 - [`docs/DEMO.md`](docs/DEMO.md): a 4-minute walkthrough script and pre-flight checklist.
+- [`docs/MAINNET.md`](docs/MAINNET.md): the plan for going from devnet to mainnet: what carries over, what changes, and what must happen before real money.
 - [`docs/DEPLOY.md`](docs/DEPLOY.md): deploy to Vercel, with the exact environment variables, plus `npm run smoke` to test the live URL.
 - [`docs/SUBMISSION.md`](docs/SUBMISSION.md): the write-up for the hackathon listing.
+
+## License
+
+[MIT](LICENSE)

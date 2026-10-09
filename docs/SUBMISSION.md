@@ -57,10 +57,10 @@ See the table in the [README](../README.md#proven-on-devnet) and the landing pag
 
 ## Being straightforward about limits
 
-- Devnet only; mainnet needs real storage, RPC and a security review.
+- Devnet only; mainnet needs real storage, RPC and a security review. The concrete plan, with rollout order, is in [`MAINNET.md`](MAINNET.md).
 - No swap UI for the *migrated* DAMM v2 pool (LaunchLens shows its reserves and your positions).
 - Phantom, Solflare and Backpack support is implemented but was not exercised live (the in-app burner wallet was used throughout).
-- The AI answers need an Anthropic API key and were covered by tests with a fake client plus a check of the no-key path, not a live call.
+- The AI answers need a server key (Anthropic, or Groq's free tier). The prompt layer is covered by tests with fake clients; the Groq path was also run live once against the real API.
 - Only the 0.25% migration fee tier was exercised.
 
 ## Deploying
