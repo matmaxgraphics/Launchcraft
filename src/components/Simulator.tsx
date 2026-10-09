@@ -114,15 +114,26 @@ export function Simulator({ curve, feeBps, solUsd, sim, onSim }: Props) {
           ))}
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
-          <button className="btn accent" disabled={!(sol > 0) || graduated} onClick={() => buy(sol)}>
+          <button
+            className="btn accent"
+            disabled={!(sol > 0) || graduated}
+            title={graduated ? "This curve has graduated, so it takes no more buys. Reset to start over." : !(sol > 0) ? "Enter an amount of SOL to buy." : undefined}
+            onClick={() => buy(sol)}
+          >
             Buy {sol > 0 ? fmtNum(sol, 2) : ""} SOL
           </button>
           {[0.25, 0.5, 1].map((p) => (
-            <button key={p} className="btn sm" disabled={sim.tokensSold <= 0} onClick={() => sellPct(p)}>
+            <button
+              key={p}
+              className="btn sm"
+              disabled={sim.tokensSold <= 0}
+              title={sim.tokensSold <= 0 ? "Nothing to sell yet. Buy first, then you can sell what you hold." : undefined}
+              onClick={() => sellPct(p)}
+            >
               Sell {p * 100}%
             </button>
           ))}
-          <button className="btn sm ghost" onClick={reset} disabled={!log.length}>
+          <button className="btn sm ghost" onClick={reset} disabled={!log.length} title={!log.length ? "No trades to reset yet." : undefined}>
             Reset
           </button>
         </div>
@@ -138,7 +149,7 @@ export function Simulator({ curve, feeBps, solUsd, sim, onSim }: Props) {
         )}
 
         <div className="log" aria-live="polite">
-          {log.length === 0 && <span className="faint" style={{ fontSize: 13 }}>No trades yet. Changing the curve resets the simulation.</span>}
+          {log.length === 0 && <span className="faint" style={{ fontSize: 13 }}>No trades yet. Buy first to unlock selling. Changing the curve resets the simulation.</span>}
           {log.map((r) => (
             <div key={r.id} className="log-row">
               <span className={`tag ${r.side}`}>{r.side}</span>

@@ -129,7 +129,7 @@ Honest list of what is **not** done or **not verified**:
 - **Devnet only.** Mainnet would need real storage and RPC, a funded and secured uploader (or a user-paid upload), and a security review. The plan is in [`docs/MAINNET.md`](docs/MAINNET.md).
 - **No trading on the migrated DAMM v2 pool** inside the app; LaunchLens shows its reserves and your positions, not a swap UI for it.
 - **Not built:** surplus and migration-fee withdrawals (zero for Launchcraft pools, which stop exactly at the threshold); migration fee tiers other than 0.25% (the code supports options 0-6, only option 0 was exercised).
-- **Not exercised live in this environment:** Phantom, Solflare and Backpack (no extension was available; the burner wallet was used throughout), and the AI answers (no API key; the prompt layer and streaming are covered by tests with a fake client, and the no-key path was checked against the running server).
+- **Not exercised live in this environment:** Phantom, Solflare and Backpack (no extension was available; the burner wallet was used throughout). **AI answers** run on Groq's free tier (`openai/gpt-oss-120b`) and were checked live on the deployed site; the Claude path is covered by tests with a fake client only, since no Anthropic key was used.
 - Rate limits are in-memory, which is fine for one server but not for a fleet.
 - Solana can reset devnet, which would expire the proof links.
 

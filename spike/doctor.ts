@@ -64,7 +64,7 @@ async function main() {
   note("The browser's burner wallet is separate; its balance shows in the app's top-right pill.");
 
   head("Optional features");
-  envHas("ANTHROPIC_API_KEY") ? ok("ANTHROPIC_API_KEY is set: AI answers enabled") : note("ANTHROPIC_API_KEY not set: AI Copilot answers off (the rule-based Copilot still works). See .env.example");
+  envHas("ANTHROPIC_API_KEY") ? ok("ANTHROPIC_API_KEY is set: AI answers enabled (Claude)") : envHas("GROQ_API_KEY") ? ok("GROQ_API_KEY is set: AI answers enabled (Groq)") : note("No ANTHROPIC_API_KEY or GROQ_API_KEY: AI Copilot answers off (the rule-based Copilot still works). See .env.example");
   try {
     const r = await fetch("https://devnet.irys.xyz/", { method: "HEAD", signal: AbortSignal.timeout(8000) });
     r.status < 500 ? ok("Irys devnet gateway reachable (logo storage)") : note(`Irys gateway answered ${r.status}`);

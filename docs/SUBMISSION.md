@@ -60,7 +60,7 @@ See the table in the [README](../README.md#proven-on-devnet) and the landing pag
 - Devnet only; mainnet needs real storage, RPC and a security review. The concrete plan, with rollout order, is in [`MAINNET.md`](MAINNET.md).
 - No swap UI for the *migrated* DAMM v2 pool (LaunchLens shows its reserves and your positions).
 - Phantom, Solflare and Backpack support is implemented but was not exercised live (the in-app burner wallet was used throughout).
-- The AI answers need a server key (Anthropic, or Groq's free tier). The prompt layer is covered by tests with fake clients; the Groq path was also run live once against the real API.
+- The AI answers need a server key (Anthropic, or Groq's free tier). The prompt layer is covered by tests with fake clients; the Groq path (the one deployed, `openai/gpt-oss-120b`) was run live on the deployed site. The Claude path was not run against the real API.
 - Only the 0.25% migration fee tier was exercised.
 
 ## Deploying
@@ -68,6 +68,6 @@ See the table in the [README](../README.md#proven-on-devnet) and the landing pag
 Step-by-step guide with the exact environment variables: [`DEPLOY.md`](DEPLOY.md). The app also runs locally with `npm run build && npm start -- -p 3100`. A public deployment publishes it under your account and has cost implications, so keep these in mind:
 
 - **Uploads spend devnet SOL** from the server-held uploader wallet (`IRYS_UPLOADER_KEY` env var), about 0.00004 SOL each. The route is rate-limited (in-memory; use a shared store behind a load balancer).
-- **AI answers spend your Anthropic credit** (`ANTHROPIC_API_KEY`); questions are rate-limited to 30/hour per connection. Omit the key and the AI box simply explains it is off.
+- **AI answers use your Groq free tier** (`GROQ_API_KEY`) or, if set, your Anthropic credit (`ANTHROPIC_API_KEY`); questions are rate-limited to 30/hour per connection. Omit the key and the AI box simply explains it is off.
 - **Set `NEXT_PUBLIC_RPC_URL`** to a free devnet RPC endpoint; the public one rate-limits under load. It must be devnet.
 - Hosts such as Vercel need these set as environment variables (never commit them).

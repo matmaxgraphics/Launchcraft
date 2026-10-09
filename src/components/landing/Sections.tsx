@@ -8,7 +8,7 @@ export const STATS: [string, string][] = [
   ["1", "signature to migrate"],
 ];
 
-export const BUILT_ON = ["Meteora DBC", "Meteora DAMM v2", "Solana", "Irys", "Claude"];
+export const BUILT_ON = ["Meteora DBC", "Meteora DAMM v2", "Solana", "Irys", "Groq"];
 
 /* ---------- little illustrations: decorative, not live data ---------- */
 
@@ -241,7 +241,7 @@ const FAQ: [string, string][] = [
   ["Is this real money?", "No. Launchcraft runs on Solana devnet only and refuses any other network. You need devnet SOL from the public faucet, or the built-in burner wallet."],
   ["What is a Dynamic Bonding Curve?", "Meteora's DBC prices a token along a curve as people buy it. When enough SOL has been deposited the pool graduates and can migrate to a Meteora DAMM v2 pool. Launchcraft lets you design that curve visually."],
   ["Which wallets work?", "A built-in burner wallet was used for every test. Phantom, Solflare and Backpack are supported through their browser providers but have not been exercised live yet."],
-  ["Do I need an AI key?", "No. The rule-based Copilot readouts always work. Free-form AI questions turn on when the server has an Anthropic key."],
+  ["Do I need an AI key?", "No. The rule-based Copilot readouts always work. Free-form AI questions are on in this demo (they run on Groq's free tier) and turn on in your own copy when you add a Groq or Anthropic key."],
   ["What does a launch cost?", "About 0.027 SOL of devnet to deploy and about 0.024 SOL to migrate. A small curve can go all the way through graduation on roughly 0.2 SOL."],
 ];
 
