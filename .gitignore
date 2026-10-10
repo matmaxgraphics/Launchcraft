@@ -7,3 +7,5 @@ spike/out
 next-env.d.ts
 .next/
 *.tsbuildinfo
+# local tooling
+.claude/
